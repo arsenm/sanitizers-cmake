@@ -21,6 +21,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+# This module tests if address sanitizer is supported by the compiler,
+# and creates a ASan build type (i.e. set CMAKE_BUILD_TYPE=ASan to use
+# it). This sets the following variables:
+#
+# CMAKE_C_FLAGS_ASAN - Flags to use for C with asan
+# CMAKE_CXX_FLAGS_ASAN  - Flags to use for C++ with asan
+# HAVE_ADDRESS_SANITIZER - True or false if the ASan build type is available
 
 include(CheckCCompilerFlag)
 
@@ -43,7 +50,11 @@ endif()
 
 if(NOT ADDRESS_SANITIZER_FLAG)
   return()
+else(NOT ADDRESS_SANITIZER_FLAG)
+  set(HAVE_ADDRESS_SANITIZER FALSE)
 endif()
+
+set(HAVE_ADDRESS_SANITIZER TRUE)
 
 set(CMAKE_C_FLAGS_ASAN "-O1 -g ${ADDRESS_SANITIZER_FLAG} -fno-omit-frame-pointer -fno-optimize-sibling-calls"
     CACHE STRING "Flags used by the C compiler during ASan builds."

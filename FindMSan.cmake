@@ -26,7 +26,7 @@
 # and creates a MSan build type (i.e. set CMAKE_BUILD_TYPE=MSan to use
 # it). This sets the following variables:
 #
-# CMAKE_C_FLAGS_MSAN - Flags to use for C with tsan
+# CMAKE_C_FLAGS_MSAN - Flags to use for C with msan
 # CMAKE_CXX_FLAGS_MSAN  - Flags to use for C++ with msan
 # HAVE_MEMORY_SANITIZER - True or false if the MSan build type is available
 
@@ -51,8 +51,11 @@ endif()
 
 if(NOT MEMORY_SANITIZER_FLAG)
   return()
+else(NOT MEMORY_SANITIZER_FLAG)
+  set(HAVE_MEMORY_SANITIZER TRUE)
 endif()
 
+set(HAVE_MEMORY_SANITIZER TRUE)
 
 set(CMAKE_C_FLAGS_MSAN "-O1 -g ${MEMORY_SANITIZER_FLAG} -fno-omit-frame-pointer -fno-optimize-sibling-calls"
     CACHE STRING "Flags used by the C compiler during MSan builds."
