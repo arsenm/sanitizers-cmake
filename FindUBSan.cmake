@@ -62,7 +62,7 @@ unset(CMAKE_REQUIRED_FLAGS)
 # produces a broken package which doesn't include the ubsan
 # compiler-rt, so check that it actually works with a linked program
 # before trying to use it
-set(CMAKE_REQUIRED_FLAGS "${UNDEFINED_BEHAVIOR_SANITIZER_FLAG}")
+set(CMAKE_REQUIRED_FLAGS "${UNDEFINED_BEHAVIOR_SANITIZER_FLAG} -Wno-error=delete-non-virtual-dtor")
 
 check_cxx_source_runs(
 "
