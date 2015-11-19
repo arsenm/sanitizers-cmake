@@ -1,4 +1,3 @@
-#
 # The MIT License (MIT)
 #
 # Copyright (c) 2013 Matthew Arsenault
@@ -10,65 +9,116 @@
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
 #
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
 #
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 # AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
-#
-# This module tests if address sanitizer is supported by the compiler,
-# and creates a ASan build type (i.e. set CMAKE_BUILD_TYPE=ASan to use
-# it). This sets the following variables:
-#
-# CMAKE_C_FLAGS_ASAN - Flags to use for C with asan
-# CMAKE_CXX_FLAGS_ASAN  - Flags to use for C++ with asan
-# HAVE_ADDRESS_SANITIZER - True or false if the ASan build type is available
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
 
-include(CheckCCompilerFlag)
+# This module tests if address sanitizer is supported by the compiler. The
+# necessary flags for compiler and linker will be stored in variables. ASan can
+# be enabled for all targets with CMake build type "ASan", individual targets
+# can enable ASan with the saitize_address() function.
 
-# Set -Werror to catch "argument unused during compilation" warnings
-set(CMAKE_REQUIRED_FLAGS "-Werror -faddress-sanitizer") # Also needs to be a link flag for test to pass
-check_c_compiler_flag("-faddress-sanitizer" HAVE_FLAG_ADDRESS_SANITIZER)
+option(SANITIZE_ADDRESS "Selects wheter Address Sanitizer will be enabled for
+    individual targets" Off)
 
-set(CMAKE_REQUIRED_FLAGS "-Werror -fsanitize=address") # Also needs to be a link flag for test to pass
-check_c_compiler_flag("-fsanitize=address" HAVE_FLAG_SANITIZE_ADDRESS)
+set(ASAN_FLAG_CANDIDATES
+    # Clang 3.2+ use this version
+    "-fsanitize=address"
 
-unset(CMAKE_REQUIRED_FLAGS)
+    # Older deprecated flag for ASan
+    "-faddress-sanitizer"
+)
 
-if(HAVE_FLAG_SANITIZE_ADDRESS)
-  # Clang 3.2+ use this version
-  set(ADDRESS_SANITIZER_FLAG "-fsanitize=address")
-elseif(HAVE_FLAG_ADDRESS_SANITIZER)
-  # Older deprecated flag for ASan
-  set(ADDRESS_SANITIZER_FLAG "-faddress-sanitizer")
+
+set(CMAKE_REQUIRED_QUIET_SAVE ${CMAKE_REQUIRED_QUIET})
+set(CMAKE_REQUIRED_QUIET ${ASan_FIND_QUIETLY})
+
+set(_ASAN_REQUIRED_VARS)
+foreach (LANG C CXX)
+    if (NOT CMAKE_${LANG}_COMPILER_LOADED)
+        continue()
+    endif()
+
+    list(APPEND _ASAN_REQUIRED_VARS ASAN_${LANG}_FLAGS)
+
+    # If flags for this compiler were already found, do not try to find them
+    # again.
+    if (ASAN_${LANG}_FLAGS)
+        continue()
+    endif ()
+
+    foreach (FLAG ${ASAN_FLAG_CANDIDATES})
+        if(NOT CMAKE_REQUIRED_QUIET)
+            message(STATUS "Try Address sanitizer ${LANG} flag = [${FLAG}]")
+        endif()
+
+        set(CMAKE_REQUIRED_FLAGS "${FLAG}")
+        unset(ASAN_FLAG_DETECTED CACHE)
+
+        if (${LANG} STREQUAL "C")
+            include(CheckCCompilerFlag)
+            check_c_compiler_flag("${FLAG}" ASAN_FLAG_DETECTED)
+
+        elseif (${LANG} STREQUAL "CXX")
+            include(CheckCXXCompilerFlag)
+            check_cxx_compiler_flag("${FLAG}" ASAN_FLAG_DETECTED)
+        endif()
+
+        if (ASAN_FLAG_DETECTED)
+            set(ASAN_${LANG}_FLAGS "${FLAG}"
+                CACHE STRING "${LANG} compiler flags for Address sanitizer")
+            break()
+        endif ()
+    endforeach()
+endforeach ()
+
+set(CMAKE_REQUIRED_QUIET ${CMAKE_REQUIRED_QUIET_SAVE})
+
+
+if (_ASAN_REQUIRED_VARS)
+    include(FindPackageHandleStandardArgs)
+    find_package_handle_standard_args(ASan REQUIRED_VARS ${_ASAN_REQUIRED_VARS})
+    mark_as_advanced(${_ASAN_REQUIRED_VARS})
+    unset(_ASAN_REQUIRED_VARS)
+else()
+    message(SEND_ERROR "FindASan requires C or CXX language to be enabled")
 endif()
 
-if(NOT ADDRESS_SANITIZER_FLAG)
-  return()
-else(NOT ADDRESS_SANITIZER_FLAG)
-  set(HAVE_ADDRESS_SANITIZER FALSE)
-endif()
 
-set(HAVE_ADDRESS_SANITIZER TRUE)
+# add build target ASan
+if (ASan_FOUND)
+    set(CMAKE_C_FLAGS_ASAN "${ASAN_C_FLAGS}" CACHE
+        STRING "Flags used by the C compiler during ASan builds.")
+    set(CMAKE_CXX_FLAGS_ASAN "${ASAN_CXX_FLAGS}" CACHE
+        STRING "Flags used by the C++ compiler during ASan builds.")
+    set(CMAKE_EXE_LINKER_FLAGS_ASAN "${ASAN_C_FLAGS}" CACHE
+        STRING "Flags used for linking binaries during ASan builds.")
+    set(CMAKE_SHARED_LINKER_FLAGS_ASAN "${ASAN_C_FLAGS}" CACHE
+        STRING "Flags used by the shared libraries linker during ASan builds.")
+    set(CMAKE_MODULE_LINKER_FLAGS_ASAN "${ASAN_C_FLAGS}" CACHE
+        STRING "Flags used by the module libraries linker during ASan builds.")
+    mark_as_advanced(CMAKE_C_FLAGS_ASAN
+                     CMAKE_CXX_FLAGS_ASAN
+                     CMAKE_EXE_LINKER_FLAGS_ASAN
+                     CMAKE_SHARED_LINKER_FLAGS_ASAN
+                     CMAKE_MODULE_LINKER_FLAGS_ASAN)
+endif ()
 
-set(CMAKE_C_FLAGS_ASAN "-O1 -g ${ADDRESS_SANITIZER_FLAG} -fno-omit-frame-pointer -fno-optimize-sibling-calls"
-    CACHE STRING "Flags used by the C compiler during ASan builds."
-    FORCE)
-set(CMAKE_CXX_FLAGS_ASAN "-O1 -g ${ADDRESS_SANITIZER_FLAG} -fno-omit-frame-pointer -fno-optimize-sibling-calls"
-    CACHE STRING "Flags used by the C++ compiler during ASan builds."
-    FORCE)
-set(CMAKE_EXE_LINKER_FLAGS_ASAN "${ADDRESS_SANITIZER_FLAG}"
-    CACHE STRING "Flags used for linking binaries during ASan builds."
-    FORCE)
-set(CMAKE_SHARED_LINKER_FLAGS_ASAN "${ADDRESS_SANITIZER_FLAG}"
-    CACHE STRING "Flags used by the shared libraries linker during ASan builds."
-    FORCE)
-mark_as_advanced(CMAKE_C_FLAGS_ASAN
-                 CMAKE_CXX_FLAGS_ASAN
-                 CMAKE_EXE_LINKER_FLAGS_ASAN
-                 CMAKE_SHARED_LINKER_FLAGS_ASAN)
+
+function (sanitize_address TARGET)
+    if (NOT SANITIZE_ADDRESS)
+        return()
+    endif ()
+
+    set_property(TARGET ${TARGET} APPEND_STRING PROPERTY
+        COMPILE_FLAGS " ${ASAN_C_FLAGS}")
+    set_property(TARGET ${TARGET} APPEND_STRING PROPERTY
+        LINK_FLAGS " ${ASAN_C_FLAGS}")
+endfunction ()
