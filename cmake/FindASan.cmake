@@ -42,41 +42,37 @@ set(CMAKE_REQUIRED_QUIET ${ASan_FIND_QUIETLY})
 
 set(_ASAN_REQUIRED_VARS)
 foreach (LANG C CXX)
-    if (NOT CMAKE_${LANG}_COMPILER_LOADED)
-        continue()
-    endif()
+    if (CMAKE_${LANG}_COMPILER_LOADED)
+        list(APPEND _ASAN_REQUIRED_VARS ASAN_${LANG}_FLAGS)
 
-    list(APPEND _ASAN_REQUIRED_VARS ASAN_${LANG}_FLAGS)
+        # If flags for this compiler were already found, do not try to find them
+        # again.
+        if (NOT ASAN_${LANG}_FLAGS)
+            foreach (FLAG ${ASAN_FLAG_CANDIDATES})
+                if(NOT CMAKE_REQUIRED_QUIET)
+                    message(STATUS "Try Address sanitizer ${LANG} flag = [${FLAG}]")
+                endif()
 
-    # If flags for this compiler were already found, do not try to find them
-    # again.
-    if (ASAN_${LANG}_FLAGS)
-        continue()
-    endif ()
+                set(CMAKE_REQUIRED_FLAGS "${FLAG}")
+                unset(ASAN_FLAG_DETECTED CACHE)
 
-    foreach (FLAG ${ASAN_FLAG_CANDIDATES})
-        if(NOT CMAKE_REQUIRED_QUIET)
-            message(STATUS "Try Address sanitizer ${LANG} flag = [${FLAG}]")
-        endif()
+                if (${LANG} STREQUAL "C")
+                    include(CheckCCompilerFlag)
+                    check_c_compiler_flag("${FLAG}" ASAN_FLAG_DETECTED)
 
-        set(CMAKE_REQUIRED_FLAGS "${FLAG}")
-        unset(ASAN_FLAG_DETECTED CACHE)
+                elseif (${LANG} STREQUAL "CXX")
+                    include(CheckCXXCompilerFlag)
+                    check_cxx_compiler_flag("${FLAG}" ASAN_FLAG_DETECTED)
+                endif()
 
-        if (${LANG} STREQUAL "C")
-            include(CheckCCompilerFlag)
-            check_c_compiler_flag("${FLAG}" ASAN_FLAG_DETECTED)
-
-        elseif (${LANG} STREQUAL "CXX")
-            include(CheckCXXCompilerFlag)
-            check_cxx_compiler_flag("${FLAG}" ASAN_FLAG_DETECTED)
-        endif()
-
-        if (ASAN_FLAG_DETECTED)
-            set(ASAN_${LANG}_FLAGS "${FLAG}"
-                CACHE STRING "${LANG} compiler flags for Address sanitizer")
-            break()
+                if (ASAN_FLAG_DETECTED)
+                    set(ASAN_${LANG}_FLAGS "${FLAG}"
+                        CACHE STRING "${LANG} compiler flags for Address sanitizer")
+                    break()
+                endif ()
+            endforeach()
         endif ()
-    endforeach()
+    endif ()
 endforeach ()
 
 set(CMAKE_REQUIRED_QUIET ${CMAKE_REQUIRED_QUIET_SAVE})
