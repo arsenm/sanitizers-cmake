@@ -115,13 +115,29 @@ if (ASan_FOUND)
 endif ()
 
 
+
 function (sanitize_address TARGET)
-    if (NOT SANITIZE_ADDRESS)
+    if (NOT SANITIZE_ADDRESS OR NOT ASan_FOUND)
         return()
     endif ()
 
-    set_property(TARGET ${TARGET} APPEND_STRING PROPERTY
-        COMPILE_FLAGS " ${ASAN_C_FLAGS}")
+    get_property(ENABLED_LANGUAGES GLOBAL PROPERTY ENABLED_LANGUAGES)
+    get_target_property(SOURCE_FILES ${TARGET} SOURCES)
+    foreach (SOURCE_FILE ${SOURCE_FILES})
+        foreach (LANG ${ENABLED_LANGUAGES})
+            get_filename_component(FILE_EXT "${SOURCE_FILE}" EXT)
+            string(TOLOWER "${FILE_EXT}" FILE_EXT)
+            string(SUBSTRING "${FILE_EXT}" 1 -1 FILE_EXT)
+            list(FIND CMAKE_${LANG}_SOURCE_FILE_EXTENSIONS "${FILE_EXT}" TEMP)
+            if (NOT ${TEMP} EQUAL -1)
+                if (DEFINED ASAN_${LANG}_FLAGS})
+                    set_property(SOURCE ${SOURCE_FILE} APPEND_STRING PROPERTY
+                        COMPILE_FLAGS " ${ASAN_${LANG}_FLAGS}")
+                endif ()
+            endif ()
+        endforeach()
+    endforeach (SOURCE_FILE)
+
     set_property(TARGET ${TARGET} APPEND_STRING PROPERTY
         LINK_FLAGS " ${ASAN_C_FLAGS}")
 endfunction ()
