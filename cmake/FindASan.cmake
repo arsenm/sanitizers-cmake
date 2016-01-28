@@ -41,7 +41,9 @@ set(CMAKE_REQUIRED_QUIET_SAVE ${CMAKE_REQUIRED_QUIET})
 set(CMAKE_REQUIRED_QUIET ${ASan_FIND_QUIETLY})
 
 set(_ASAN_REQUIRED_VARS)
-foreach (LANG C CXX)
+
+get_property(ENABLED_LANGUAGES GLOBAL PROPERTY ENABLED_LANGUAGES)
+foreach (LANG ${ENABLED_LANGUAGES})
     if (CMAKE_${LANG}_COMPILER_LOADED)
         list(APPEND _ASAN_REQUIRED_VARS ASAN_${LANG}_FLAGS)
 
@@ -63,6 +65,10 @@ foreach (LANG C CXX)
                 elseif (${LANG} STREQUAL "CXX")
                     include(CheckCXXCompilerFlag)
                     check_cxx_compiler_flag("${FLAG}" ASAN_FLAG_DETECTED)
+
+                elseif (${LANG} STREQUAL "Fortran")
+                    include(CheckFortranCompilerFlag)
+                    check_fortran_compiler_flag("${FLAG}" ASAN_FLAG_DETECTED)
                 endif()
 
                 if (ASAN_FLAG_DETECTED)
@@ -84,25 +90,26 @@ if (_ASAN_REQUIRED_VARS)
     mark_as_advanced(${_ASAN_REQUIRED_VARS})
     unset(_ASAN_REQUIRED_VARS)
 else()
-    message(SEND_ERROR "FindASan requires C or CXX language to be enabled")
+    message(SEND_ERROR "FindASan requires C, CXX or Fortran language to be enabled")
 endif()
 
 
 # add build target ASan
 if (ASan_FOUND)
-    set(CMAKE_C_FLAGS_ASAN "${ASAN_C_FLAGS}" CACHE
-        STRING "Flags used by the C compiler during ASan builds.")
-    set(CMAKE_CXX_FLAGS_ASAN "${ASAN_CXX_FLAGS}" CACHE
-        STRING "Flags used by the C++ compiler during ASan builds.")
+    get_property(ENABLED_LANGUAGES GLOBAL PROPERTY ENABLED_LANGUAGES)
+    foreach (LANG ${ENABLED_LANGUAGES})
+        set(CMAKE_${LANG}_FLAGS_ASAN "${ASAN_${LANG}_FLAGS}" CACHE
+            STRING "Flags used by the ${LANG} compiler during ASan builds.")
+        mark_as_advanced(CMAKE_${LANG}_FLAGS_ASAN)
+    endforeach ()
+
     set(CMAKE_EXE_LINKER_FLAGS_ASAN "${ASAN_C_FLAGS}" CACHE
         STRING "Flags used for linking binaries during ASan builds.")
     set(CMAKE_SHARED_LINKER_FLAGS_ASAN "${ASAN_C_FLAGS}" CACHE
         STRING "Flags used by the shared libraries linker during ASan builds.")
     set(CMAKE_MODULE_LINKER_FLAGS_ASAN "${ASAN_C_FLAGS}" CACHE
         STRING "Flags used by the module libraries linker during ASan builds.")
-    mark_as_advanced(CMAKE_C_FLAGS_ASAN
-                     CMAKE_CXX_FLAGS_ASAN
-                     CMAKE_EXE_LINKER_FLAGS_ASAN
+    mark_as_advanced(CMAKE_EXE_LINKER_FLAGS_ASAN
                      CMAKE_SHARED_LINKER_FLAGS_ASAN
                      CMAKE_MODULE_LINKER_FLAGS_ASAN)
 endif ()
