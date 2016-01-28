@@ -117,7 +117,7 @@ endif ()
 
 
 function (sanitize_address TARGET)
-    if (NOT SANITIZE_ADDRESS OR NOT ASan_FOUND)
+    if (NOT SANITIZE_ADDRESS)
         return()
     endif ()
 
