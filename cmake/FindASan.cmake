@@ -130,7 +130,7 @@ function (sanitize_address TARGET)
             string(SUBSTRING "${FILE_EXT}" 1 -1 FILE_EXT)
             list(FIND CMAKE_${LANG}_SOURCE_FILE_EXTENSIONS "${FILE_EXT}" TEMP)
             if (NOT ${TEMP} EQUAL -1)
-                if (DEFINED ASAN_${LANG}_FLAGS})
+                if (DEFINED ASAN_${LANG}_FLAGS)
                     set_property(SOURCE ${SOURCE_FILE} APPEND_STRING PROPERTY
                         COMPILE_FLAGS " ${ASAN_${LANG}_FLAGS}")
                 endif ()
