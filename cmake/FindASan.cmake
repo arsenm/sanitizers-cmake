@@ -82,7 +82,7 @@ foreach (LANG ${ENABLED_LANGUAGES})
 
             if (ASAN_FLAG_DETECTED)
                 set(ASAN_${COMPILER}_FLAGS "${FLAG}"
-                    CACHE STRING "${LANG} compiler flags for AddressSanitizer.")
+                    CACHE STRING "${COMPILER} flags for AddressSanitizer.")
                 mark_as_advanced(ASAN_${COMPILER}_FLAGS)
                 break()
             endif ()
