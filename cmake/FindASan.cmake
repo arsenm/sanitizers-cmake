@@ -40,80 +40,62 @@ set(ASAN_FLAG_CANDIDATES
 set(CMAKE_REQUIRED_QUIET_SAVE ${CMAKE_REQUIRED_QUIET})
 set(CMAKE_REQUIRED_QUIET ${ASan_FIND_QUIETLY})
 
-set(_ASAN_REQUIRED_VARS)
-
 get_property(ENABLED_LANGUAGES GLOBAL PROPERTY ENABLED_LANGUAGES)
 foreach (LANG ${ENABLED_LANGUAGES})
-    if (CMAKE_${LANG}_COMPILER_LOADED)
-        list(APPEND _ASAN_REQUIRED_VARS ASAN_${LANG}_FLAGS)
+    # Sanitizer flags are not dependend on language, but the used compiler. So
+    # instead of searching flags foreach language, search flags foreach compiler
+    # used.
+    set(COMPILER ${CMAKE_${LANG}_COMPILER_ID})
+    if (NOT ASAN_${COMPILER}_FLAGS)
+        foreach (FLAG ${ASAN_FLAG_CANDIDATES})
+            if(NOT CMAKE_REQUIRED_QUIET)
+                message(STATUS
+                    "Try ${COMPILER} AddressSanitizer flag = [${FLAG}]")
+            endif()
 
-        # If flags for this compiler were already found, do not try to find them
-        # again.
-        if (NOT ASAN_${LANG}_FLAGS)
-            foreach (FLAG ${ASAN_FLAG_CANDIDATES})
-                if(NOT CMAKE_REQUIRED_QUIET)
-                    message(STATUS "Try Address sanitizer ${LANG} flag = [${FLAG}]")
-                endif()
+            set(CMAKE_REQUIRED_FLAGS "${FLAG}")
+            unset(ASAN_FLAG_DETECTED CACHE)
 
-                set(CMAKE_REQUIRED_FLAGS "${FLAG}")
-                unset(ASAN_FLAG_DETECTED CACHE)
+            if (${LANG} STREQUAL "C")
+                include(CheckCCompilerFlag)
+                check_c_compiler_flag("${FLAG}" ASAN_FLAG_DETECTED)
 
-                if (${LANG} STREQUAL "C")
-                    include(CheckCCompilerFlag)
-                    check_c_compiler_flag("${FLAG}" ASAN_FLAG_DETECTED)
+            elseif (${LANG} STREQUAL "CXX")
+                include(CheckCXXCompilerFlag)
+                check_cxx_compiler_flag("${FLAG}" ASAN_FLAG_DETECTED)
 
-                elseif (${LANG} STREQUAL "CXX")
-                    include(CheckCXXCompilerFlag)
-                    check_cxx_compiler_flag("${FLAG}" ASAN_FLAG_DETECTED)
-
-                elseif (${LANG} STREQUAL "Fortran")
-                    include(CheckFortranCompilerFlag)
+            elseif (${LANG} STREQUAL "Fortran")
+                # CheckFortranCompilerFlag was introduced in CMake 3.x. To be
+                # compatible with older Cmake versions, we will check if this
+                # module is present before we use it. Otherwise we will define
+                # Fortran coverage support as not available.
+                include(CheckFortranCompilerFlag OPTIONAL
+                    RESULT_VARIABLE INCLUDED)
+                if (INCLUDED)
                     check_fortran_compiler_flag("${FLAG}" ASAN_FLAG_DETECTED)
-                endif()
-
-                if (ASAN_FLAG_DETECTED)
-                    set(ASAN_${LANG}_FLAGS "${FLAG}"
-                        CACHE STRING "${LANG} compiler flags for Address sanitizer")
-                    break()
+                elseif (NOT CMAKE_REQUIRED_QUIET)
+                    message("-- Performing Test ASAN_FLAG_DETECTED")
+                    message("-- Performing Test ASAN_FLAG_DETECTED - Failed "
+                        "(Check not supported)")
                 endif ()
-            endforeach()
-        endif ()
+            endif()
+
+            if (ASAN_FLAG_DETECTED)
+                set(ASAN_${COMPILER}_FLAGS "${FLAG}"
+                    CACHE STRING "${LANG} compiler flags for AddressSanitizer.")
+                mark_as_advanced(ASAN_${COMPILER}_FLAGS)
+                break()
+            endif ()
+        endforeach ()
     endif ()
 endforeach ()
 
 set(CMAKE_REQUIRED_QUIET ${CMAKE_REQUIRED_QUIET_SAVE})
 
 
-if (_ASAN_REQUIRED_VARS)
-    include(FindPackageHandleStandardArgs)
-    find_package_handle_standard_args(ASan REQUIRED_VARS ${_ASAN_REQUIRED_VARS})
-    mark_as_advanced(${_ASAN_REQUIRED_VARS})
-    unset(_ASAN_REQUIRED_VARS)
-else()
-    message(SEND_ERROR "FindASan requires C, CXX or Fortran language to be enabled")
-endif()
 
 
-# add build target ASan
-if (ASan_FOUND)
-    get_property(ENABLED_LANGUAGES GLOBAL PROPERTY ENABLED_LANGUAGES)
-    foreach (LANG ${ENABLED_LANGUAGES})
-        set(CMAKE_${LANG}_FLAGS_ASAN "${ASAN_${LANG}_FLAGS}" CACHE
-            STRING "Flags used by the ${LANG} compiler during ASan builds.")
-        mark_as_advanced(CMAKE_${LANG}_FLAGS_ASAN)
-    endforeach ()
-
-    set(CMAKE_EXE_LINKER_FLAGS_ASAN "${ASAN_C_FLAGS}" CACHE
-        STRING "Flags used for linking binaries during ASan builds.")
-    set(CMAKE_SHARED_LINKER_FLAGS_ASAN "${ASAN_C_FLAGS}" CACHE
-        STRING "Flags used by the shared libraries linker during ASan builds.")
-    set(CMAKE_MODULE_LINKER_FLAGS_ASAN "${ASAN_C_FLAGS}" CACHE
-        STRING "Flags used by the module libraries linker during ASan builds.")
-    mark_as_advanced(CMAKE_EXE_LINKER_FLAGS_ASAN
-                     CMAKE_SHARED_LINKER_FLAGS_ASAN
-                     CMAKE_MODULE_LINKER_FLAGS_ASAN)
-endif ()
-
+include(sanitize-helpers)
 
 
 function (sanitize_address TARGET)
@@ -121,23 +103,25 @@ function (sanitize_address TARGET)
         return()
     endif ()
 
-    get_property(ENABLED_LANGUAGES GLOBAL PROPERTY ENABLED_LANGUAGES)
-    get_target_property(SOURCE_FILES ${TARGET} SOURCES)
-    foreach (SOURCE_FILE ${SOURCE_FILES})
-        foreach (LANG ${ENABLED_LANGUAGES})
-            get_filename_component(FILE_EXT "${SOURCE_FILE}" EXT)
-            string(TOLOWER "${FILE_EXT}" FILE_EXT)
-            string(SUBSTRING "${FILE_EXT}" 1 -1 FILE_EXT)
-            list(FIND CMAKE_${LANG}_SOURCE_FILE_EXTENSIONS "${FILE_EXT}" TEMP)
-            if (NOT ${TEMP} EQUAL -1)
-                if (DEFINED ASAN_${LANG}_FLAGS)
-                    set_property(SOURCE ${SOURCE_FILE} APPEND_STRING PROPERTY
-                        COMPILE_FLAGS " ${ASAN_${LANG}_FLAGS}")
-                endif ()
-            endif ()
-        endforeach()
-    endforeach (SOURCE_FILE)
+    # Get list of compilers used by target and check, if target can be checked
+    # by sanitizer.
+    sanitizer_target_compilers(${TARGET} TARGET_COMPILER)
+    list(LENGTH TARGET_COMPILER NUM_COMPILERS)
+    if (NUM_COMPILERS GREATER 1)
+        message(AUTHOR_WARNING "AddressSanitizer disabled for target ${TARGET} "
+            "because it will be compiled by different compilers.")
+        return()
 
-    set_property(TARGET ${TARGET} APPEND_STRING PROPERTY
-        LINK_FLAGS " ${ASAN_C_FLAGS}")
+    elseif ((NUM_COMPILERS EQUAL 0) OR
+        (NOT DEFINED "ASAN_${TARGET_COMPILER}_FLAGS"))
+        message(AUTHOR_WARNING "AddressSanitizer disabled for target ${TARGET} "
+            "because there is no sanitizer available for target sources.")
+        return()
+    endif()
+
+    # Set compile- and link-flags for target.
+    set_property(TARGET ${TARGET} APPEND_STRING
+        PROPERTY COMPILE_FLAGS " ${ASAN_${TARGET_COMPILER}_FLAGS}")
+    set_property(TARGET ${TARGET} APPEND_STRING
+        PROPERTY LINK_FLAGS " ${ASAN_${TARGET_COMPILER}_FLAGS}")
 endfunction ()
