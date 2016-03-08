@@ -30,10 +30,10 @@ option(SANITIZE_ADDRESS "Selects wheter Address Sanitizer will be enabled for
 
 set(ASAN_FLAG_CANDIDATES
     # Clang 3.2+ use this version
-    "-fsanitize=address"
+    "-g -O0 -fsanitize=address"
 
     # Older deprecated flag for ASan
-    "-faddress-sanitizer"
+    "-g -O0 -faddress-sanitizer"
 )
 
 
