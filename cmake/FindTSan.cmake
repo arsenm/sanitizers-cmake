@@ -31,7 +31,22 @@ set(FLAG_CANDIDATES
 
 include(sanitize-helpers)
 
-sanitizer_check_compiler_flags("${FLAG_CANDIDATES}" "ThreadSanitizer" "TSan")
+if (SANITIZE_THREAD)
+    if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+        message(WARNING "ThreadSanitizer disabled for target ${TARGET} because "
+            "ThreadSanitizer is supported for Linux systems only.")
+        set(SANITIZE_THREAD Off CACHE BOOL
+            "Enable ThreadSanitizer for sanitized targets." FORCE)
+    elseif (NOT ${CMAKE_SIZEOF_VOID_P} EQUAL 8)
+        message(WARNING "ThreadSanitizer disabled for target ${TARGET} because "
+            "ThreadSanitizer is supported for 64bit systems only.")
+        set(SANITIZE_THREAD Off CACHE BOOL
+            "Enable ThreadSanitizer for sanitized targets." FORCE)
+    else ()
+        sanitizer_check_compiler_flags("${FLAG_CANDIDATES}" "ThreadSanitizer"
+            "TSan")
+    endif ()
+endif ()
 
 function (add_sanitize_thread TARGET)
     if (NOT SANITIZE_THREAD)
