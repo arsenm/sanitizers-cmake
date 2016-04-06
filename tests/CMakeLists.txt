@@ -31,6 +31,7 @@ function(add_testcase TESTNAME SOURCEFILES)
 
 	# add a new executable
 	add_executable(${TESTNAME} ${ARGV})
+	add_sanitizers(${TESTNAME})
 
 	# add a testcase for executable
 	add_test(${TESTNAME} ${TESTNAME})
@@ -41,10 +42,7 @@ endfunction(add_testcase)
 #
 # search for sanitizers
 #
-find_package(ASan)
-find_package(MSan)
-find_package(TSan)
-find_package(UBSan)
+find_package(Sanitizers)
 
 
 

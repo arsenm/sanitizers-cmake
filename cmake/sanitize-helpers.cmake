@@ -64,3 +64,86 @@ function (sanitizer_target_compilers TARGET RETURN_VAR)
     list(REMOVE_DUPLICATES BUFFER)
     set(${RETURN_VAR} "${BUFFER}" PARENT_SCOPE)
 endfunction ()
+
+
+# Helper function to test compiler flags.
+function (sanitizer_check_compiler_flags FLAG_CANDIDATES NAME PREFIX)
+    set(CMAKE_REQUIRED_QUIET ${${PREFIX}_FIND_QUIETLY})
+
+    get_property(ENABLED_LANGUAGES GLOBAL PROPERTY ENABLED_LANGUAGES)
+    foreach (LANG ${ENABLED_LANGUAGES})
+        # Sanitizer flags are not dependend on language, but the used compiler.
+        # So instead of searching flags foreach language, search flags foreach
+        # compiler used.
+        set(COMPILER ${CMAKE_${LANG}_COMPILER_ID})
+        if (NOT ${PREFIX}_${COMPILER}_FLAGS)
+            foreach (FLAG ${FLAG_CANDIDATES})
+                if(NOT CMAKE_REQUIRED_QUIET)
+                    message(STATUS "Try ${COMPILER} ${NAME} flag = [${FLAG}]")
+                endif()
+
+                set(CMAKE_REQUIRED_FLAGS "${FLAG}")
+                unset(${PREFIX}_FLAG_DETECTED CACHE)
+
+                if (${LANG} STREQUAL "C")
+                    include(CheckCCompilerFlag)
+                    check_c_compiler_flag("${FLAG}" ${PREFIX}_FLAG_DETECTED)
+
+                elseif (${LANG} STREQUAL "CXX")
+                    include(CheckCXXCompilerFlag)
+                    check_cxx_compiler_flag("${FLAG}" ${PREFIX}_FLAG_DETECTED)
+
+                elseif (${LANG} STREQUAL "Fortran")
+                    # CheckFortranCompilerFlag was introduced in CMake 3.x. To
+                    # be compatible with older Cmake versions, we will check if
+                    # this module is present before we use it. Otherwise we will
+                    # define Fortran coverage support as not available.
+                    include(CheckFortranCompilerFlag OPTIONAL
+                        RESULT_VARIABLE INCLUDED)
+                    if (INCLUDED)
+                        check_fortran_compiler_flag("${FLAG}"
+                            ASAN_FLAG_DETECTED)
+                    elseif (NOT CMAKE_REQUIRED_QUIET)
+                        message(STATUS
+                            "Performing Test ${PREFIX}_FLAG_DETECTED")
+                        message(STATUS "Performing Test ${PREFIX}_FLAG_DETECTED"
+                            " - Failed (Check not supported)")
+                    endif ()
+                endif()
+
+                if (${PREFIX}_FLAG_DETECTED)
+                    set(${PREFIX}_${COMPILER}_FLAGS "${FLAG}" CACHE STRING
+                        "${NAME} flags for ${COMPILER} compiler.")
+                    mark_as_advanced(${PREFIX}_${COMPILER}_FLAGS)
+                    break()
+                endif ()
+            endforeach ()
+        endif ()
+    endforeach ()
+endfunction ()
+
+
+# Helper to assign sanitizer flags for TARGET.
+function (saitizer_add_flags TARGET NAME PREFIX)
+    # Get list of compilers used by target and check, if target can be checked
+    # by sanitizer.
+    sanitizer_target_compilers(${TARGET} TARGET_COMPILER)
+    list(LENGTH TARGET_COMPILER NUM_COMPILERS)
+    if (NUM_COMPILERS GREATER 1)
+        message(AUTHOR_WARNING "${NAME} disabled for target ${TARGET} because "
+            "it will be compiled by different compilers.")
+        return()
+
+    elseif ((NUM_COMPILERS EQUAL 0) OR
+        (NOT DEFINED "${PREFIX}_${TARGET_COMPILER}_FLAGS"))
+        message(WARNING "${NAME} disabled for target ${TARGET} because there is"
+            " no sanitizer available for target sources.")
+        return()
+    endif()
+
+    # Set compile- and link-flags for target.
+    set_property(TARGET ${TARGET} APPEND_STRING
+        PROPERTY COMPILE_FLAGS " ${${PREFIX}_${TARGET_COMPILER}_FLAGS}")
+    set_property(TARGET ${TARGET} APPEND_STRING
+        PROPERTY LINK_FLAGS " ${${PREFIX}_${TARGET_COMPILER}_FLAGS}")
+endfunction ()

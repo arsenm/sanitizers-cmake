@@ -22,25 +22,29 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-option(SANITIZE_ADDRESS "Enable AddressSanitizer for sanitized targets." Off)
 
-set(FLAG_CANDIDATES
-    # Clang 3.2+ use this version
-    "-g -O1 -fsanitize=address"
+# The following options will enable the desired sanitizers.
+option(SANITIZE "Enable all available sanitizers for sanitized targets." OFF)
 
-    # Older deprecated flag for ASan
-    "-g -O1 -faddress-sanitizer"
-)
+# If option SANITIZE is enabled, enable all available sanitizers.
+if (SANITIZE)
+    set(SANITIZE_ADDRESS ON CACHE BOOL
+        "Enable AddressSanitizer for sanitized targets." FORCE)
+endif (SANITIZE)
 
 
-include(sanitize-helpers)
 
-sanitizer_check_compiler_flags("${FLAG_CANDIDATES}" "AddressSanitizer" "ASan")
 
-function (add_sanitize_address TARGET)
-    if (NOT SANITIZE_ADDRESS)
-        return()
-    endif ()
+set(FIND_QUIETLY_FLAG "")
+if (DEFINED Sanitizers_FIND_QUIETLY)
+    set(FIND_QUIETLY_FLAG "QUIET")
+endif ()
 
-    saitizer_add_flags(${TARGET} "AddressSanitizer" "ASan")
-endfunction ()
+find_package(ASan ${FIND_QUIETLY_FLAG})
+
+
+
+
+function(add_sanitizers TARGET)
+    add_sanitize_address(${TARGET})
+endfunction(add_sanitizers)
