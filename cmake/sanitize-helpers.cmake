@@ -76,7 +76,7 @@ function (sanitizer_check_compiler_flags FLAG_CANDIDATES NAME PREFIX)
         # So instead of searching flags foreach language, search flags foreach
         # compiler used.
         set(COMPILER ${CMAKE_${LANG}_COMPILER_ID})
-        if (NOT ${PREFIX}_${COMPILER}_FLAGS)
+        if (NOT DEFINED ${PREFIX}_${COMPILER}_FLAGS)
             foreach (FLAG ${FLAG_CANDIDATES})
                 if(NOT CMAKE_REQUIRED_QUIET)
                     message(STATUS "Try ${COMPILER} ${NAME} flag = [${FLAG}]")
@@ -118,6 +118,12 @@ function (sanitizer_check_compiler_flags FLAG_CANDIDATES NAME PREFIX)
                     break()
                 endif ()
             endforeach ()
+
+            if (NOT ${PREFIX}_FLAG_DETECTED)
+                set(${PREFIX}_${COMPILER}_FLAGS "" CACHE STRING
+                    "${NAME} flags for ${COMPILER} compiler.")
+                mark_as_advanced(${PREFIX}_${COMPILER}_FLAGS)
+            endif ()
         endif ()
     endforeach ()
 endfunction ()
@@ -135,7 +141,7 @@ function (saitizer_add_flags TARGET NAME PREFIX)
         return()
 
     elseif ((NUM_COMPILERS EQUAL 0) OR
-        (NOT DEFINED "${PREFIX}_${TARGET_COMPILER}_FLAGS"))
+        ("${${PREFIX}_${TARGET_COMPILER}_FLAGS}" STREQUAL ""))
         message(WARNING "${NAME} disabled for target ${TARGET} because there is"
             " no sanitizer available for target sources.")
         return()
