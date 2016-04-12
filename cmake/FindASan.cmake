@@ -33,9 +33,18 @@ set(FLAG_CANDIDATES
 )
 
 
+if (SANITIZE_ADDRESS AND (SANITIZE_THREAD OR SANITIZE_MEMORY))
+    message(FATAL_ERROR "AddressSanitizer is not compatible with "
+        "ThreadSanitizer or MemorySanitizer.")
+endif ()
+
+
 include(sanitize-helpers)
 
-sanitizer_check_compiler_flags("${FLAG_CANDIDATES}" "AddressSanitizer" "ASan")
+if (SANITIZE_ADDRESS)
+    sanitizer_check_compiler_flags("${FLAG_CANDIDATES}" "AddressSanitizer"
+        "ASan")
+endif ()
 
 function (add_sanitize_address TARGET)
     if (NOT SANITIZE_ADDRESS)

@@ -22,25 +22,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-
-# The following options will enable the desired sanitizers.
-option(SANITIZE "Enable all available sanitizers for sanitized targets." OFF)
-
-# If option SANITIZE is enabled, enable all available sanitizers.
-if (SANITIZE)
-    set(SANITIZE_ADDRESS ON CACHE BOOL
-        "Enable AddressSanitizer for sanitized targets." FORCE)
-    set(SANITIZE_THREAD ON CACHE BOOL
-        "Enable ThreadSanitizer for sanitized targets." FORCE)
-    set(SANITIZE_MEMORY ON CACHE BOOL
-        "Enable MemorySanitizer for sanitized targets." FORCE)
-    set(SANITIZE_UNDEFINED ON CACHE BOOL
-        "Enable UndefinedBehaviorSanitizer for sanitized targets." FORCE)
-endif (SANITIZE)
-
-
-
-
 set(FIND_QUIETLY_FLAG "")
 if (DEFINED Sanitizers_FIND_QUIETLY)
     set(FIND_QUIETLY_FLAG "QUIET")

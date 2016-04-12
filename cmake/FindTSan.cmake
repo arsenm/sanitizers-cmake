@@ -29,6 +29,13 @@ set(FLAG_CANDIDATES
 )
 
 
+# ThreadSanitizer is not compatible with MemorySanitizer.
+if (SANITIZE_THREAD AND SANITIZE_MEMORY)
+    message(FATAL_ERROR "ThreadSanitizer is not compatible with "
+        "MemorySanitizer.")
+endif ()
+
+
 include(sanitize-helpers)
 
 if (SANITIZE_THREAD)
