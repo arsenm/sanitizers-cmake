@@ -35,6 +35,16 @@ find_package(UBSan ${FIND_QUIETLY_FLAG})
 
 
 
+function(sanitizer_add_blacklist_file FILE)
+    if(NOT IS_ABSOLUTE ${FILE})
+        set(FILE "${CMAKE_CURRENT_SOURCE_DIR}/${FILE}")
+    endif()
+    get_filename_component(FILE "${FILE}" REALPATH)
+
+    sanitizer_check_compiler_flags("-fsanitize-blacklist=${FILE}"
+        "SanitizerBlacklist" "SanBlist")
+endfunction()
+
 function(add_sanitizers TARGET)
     add_sanitize_address(${TARGET})
     add_sanitize_thread(${TARGET})

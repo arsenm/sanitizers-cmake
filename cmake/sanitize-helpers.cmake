@@ -151,5 +151,7 @@ function (saitizer_add_flags TARGET NAME PREFIX)
     set_property(TARGET ${TARGET} APPEND_STRING
         PROPERTY COMPILE_FLAGS " ${${PREFIX}_${TARGET_COMPILER}_FLAGS}")
     set_property(TARGET ${TARGET} APPEND_STRING
+        PROPERTY COMPILE_FLAGS " ${SanBlist_${TARGET_COMPILER}_FLAGS}")
+    set_property(TARGET ${TARGET} APPEND_STRING
         PROPERTY LINK_FLAGS " ${${PREFIX}_${TARGET_COMPILER}_FLAGS}")
 endfunction ()
