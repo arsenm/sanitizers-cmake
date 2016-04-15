@@ -102,7 +102,7 @@ function (sanitizer_check_compiler_flags FLAG_CANDIDATES NAME PREFIX)
                         RESULT_VARIABLE INCLUDED)
                     if (INCLUDED)
                         check_fortran_compiler_flag("${FLAG}"
-                            ASAN_FLAG_DETECTED)
+                            ${PREFIX}_FLAG_DETECTED)
                     elseif (NOT CMAKE_REQUIRED_QUIET)
                         message(STATUS
                             "Performing Test ${PREFIX}_FLAG_DETECTED")
@@ -136,8 +136,8 @@ function (saitizer_add_flags TARGET NAME PREFIX)
     sanitizer_target_compilers(${TARGET} TARGET_COMPILER)
     list(LENGTH TARGET_COMPILER NUM_COMPILERS)
     if (NUM_COMPILERS GREATER 1)
-        message(AUTHOR_WARNING "${NAME} disabled for target ${TARGET} because "
-            "it will be compiled by different compilers.")
+        message(WARNING "${NAME} disabled for target ${TARGET} because it will "
+            "be compiled by different compilers.")
         return()
 
     elseif ((NUM_COMPILERS EQUAL 0) OR
