@@ -25,7 +25,7 @@
 option(SANITIZE_MEMORY "Enable MemorySanitizer for sanitized targets." Off)
 
 set(FLAG_CANDIDATES
-    "-g -O1 -fsanitize=memory"
+    "-g -fsanitize=memory"
 )
 
 
