@@ -22,6 +22,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# If any of the used compiler is a GNU compiler, add a second option to static
+# link against the sanitizers.
+option(SANITIZE_LINK_STATIC "Try to link static against sanitizers." Off)
+
+
+
+
 set(FIND_QUIETLY_FLAG "")
 if (DEFINED Sanitizers_FIND_QUIETLY)
     set(FIND_QUIETLY_FLAG "QUIET")

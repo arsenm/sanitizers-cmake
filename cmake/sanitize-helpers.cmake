@@ -66,6 +66,33 @@ function (sanitizer_target_compilers TARGET RETURN_VAR)
 endfunction ()
 
 
+# Helper function to check compiler flags for language compiler.
+function (sanitizer_check_compiler_flag FLAG LANG VARIABLE)
+    if (${LANG} STREQUAL "C")
+        include(CheckCCompilerFlag)
+        check_c_compiler_flag("${FLAG}" ${VARIABLE})
+
+    elseif (${LANG} STREQUAL "CXX")
+        include(CheckCXXCompilerFlag)
+        check_cxx_compiler_flag("${FLAG}" ${VARIABLE})
+
+    elseif (${LANG} STREQUAL "Fortran")
+        # CheckFortranCompilerFlag was introduced in CMake 3.x. To be compatible
+        # with older Cmake versions, we will check if this module is present
+        # before we use it. Otherwise we will define Fortran coverage support as
+        # not available.
+        include(CheckFortranCompilerFlag OPTIONAL RESULT_VARIABLE INCLUDED)
+        if (INCLUDED)
+            check_fortran_compiler_flag("${FLAG}" ${VARIABLE})
+        elseif (NOT CMAKE_REQUIRED_QUIET)
+            message(STATUS "Performing Test ${VARIABLE}")
+            message(STATUS "Performing Test ${VARIABLE}"
+                " - Failed (Check not supported)")
+        endif ()
+    endif()
+endfunction ()
+
+
 # Helper function to test compiler flags.
 function (sanitizer_check_compiler_flags FLAG_CANDIDATES NAME PREFIX)
     set(CMAKE_REQUIRED_QUIET ${${PREFIX}_FIND_QUIETLY})
@@ -84,34 +111,23 @@ function (sanitizer_check_compiler_flags FLAG_CANDIDATES NAME PREFIX)
 
                 set(CMAKE_REQUIRED_FLAGS "${FLAG}")
                 unset(${PREFIX}_FLAG_DETECTED CACHE)
-
-                if (${LANG} STREQUAL "C")
-                    include(CheckCCompilerFlag)
-                    check_c_compiler_flag("${FLAG}" ${PREFIX}_FLAG_DETECTED)
-
-                elseif (${LANG} STREQUAL "CXX")
-                    include(CheckCXXCompilerFlag)
-                    check_cxx_compiler_flag("${FLAG}" ${PREFIX}_FLAG_DETECTED)
-
-                elseif (${LANG} STREQUAL "Fortran")
-                    # CheckFortranCompilerFlag was introduced in CMake 3.x. To
-                    # be compatible with older Cmake versions, we will check if
-                    # this module is present before we use it. Otherwise we will
-                    # define Fortran coverage support as not available.
-                    include(CheckFortranCompilerFlag OPTIONAL
-                        RESULT_VARIABLE INCLUDED)
-                    if (INCLUDED)
-                        check_fortran_compiler_flag("${FLAG}"
-                            ${PREFIX}_FLAG_DETECTED)
-                    elseif (NOT CMAKE_REQUIRED_QUIET)
-                        message(STATUS
-                            "Performing Test ${PREFIX}_FLAG_DETECTED")
-                        message(STATUS "Performing Test ${PREFIX}_FLAG_DETECTED"
-                            " - Failed (Check not supported)")
-                    endif ()
-                endif()
+                sanitizer_check_compiler_flag("${FLAG}" ${LANG}
+                    ${PREFIX}_FLAG_DETECTED)
 
                 if (${PREFIX}_FLAG_DETECTED)
+                    # If compiler is a GNU compiler, search for static flag, if
+                    # SANITIZE_LINK_STATIC is enabled.
+                    if (SANITIZE_LINK_STATIC)
+                        string(TOLOWER ${PREFIX} PREFIX_lower)
+                        sanitizer_check_compiler_flag(
+                            "-static-lib${PREFIX_lower}" ${LANG}
+                            ${PREFIX}_STATIC_FLAG_DETECTED)
+
+                        if (${PREFIX}_STATIC_FLAG_DETECTED)
+                            set(FLAG "-static-lib${PREFIX_lower} ${FLAG}")
+                        endif ()
+                    endif ()
+
                     set(${PREFIX}_${COMPILER}_FLAGS "${FLAG}" CACHE STRING
                         "${NAME} flags for ${COMPILER} compiler.")
                     mark_as_advanced(${PREFIX}_${COMPILER}_FLAGS)
