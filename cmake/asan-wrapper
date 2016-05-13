@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # The MIT License (MIT)
 #
 # Copyright (c)
@@ -22,38 +24,32 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-option(SANITIZE_ADDRESS "Enable AddressSanitizer for sanitized targets." Off)
-
-set(FLAG_CANDIDATES
-    # Clang 3.2+ use this version. The no-omit-frame-pointer option is optional.
-    "-g -fsanitize=address -fno-omit-frame-pointer"
-    "-g -fsanitize=address"
-
-    # Older deprecated flag for ASan
-    "-g -faddress-sanitizer"
-)
+# This script is a wrapper for AddressSanitizer. In some special cases you need
+# to preload AddressSanitizer to avoid error messages - e.g. if you're
+# preloading another library to your application. At the moment this script will
+# only do something, if we're running on a Linux platform. OSX might not be
+# affected.
 
 
-if (SANITIZE_ADDRESS AND (SANITIZE_THREAD OR SANITIZE_MEMORY))
-    message(FATAL_ERROR "AddressSanitizer is not compatible with "
-        "ThreadSanitizer or MemorySanitizer.")
-endif ()
+# Exit immediately, if platform is not Linux.
+if [ "$(uname)" != "Linux" ]
+then
+    exec $@
+fi
 
 
-include(sanitize-helpers)
+# Get the used libasan of the application ($1). If a libasan was found, it will
+# be prepended to LD_PRELOAD.
+libasan=$(ldd $1 | grep libasan | sed "s/^[[:space:]]//" | cut -d' ' -f1)
+if [ -n "$libasan" ]
+then
+    if [ -n "$LD_PRELOAD" ]
+    then
+        export LD_PRELOAD="$libasan:$LD_PRELOAD"
+    else
+        export LD_PRELOAD="$libasan"
+    fi
+fi
 
-if (SANITIZE_ADDRESS)
-    sanitizer_check_compiler_flags("${FLAG_CANDIDATES}" "AddressSanitizer"
-        "ASan")
-
-    find_program(ASan_WRAPPER "asan-wrapper" PATHS ${CMAKE_MODULE_PATH})
-	mark_as_advanced(ASan_WRAPPER)
-endif ()
-
-function (add_sanitize_address TARGET)
-    if (NOT SANITIZE_ADDRESS)
-        return()
-    endif ()
-
-    saitizer_add_flags(${TARGET} "AddressSanitizer" "ASan")
-endfunction ()
+# Execute the application.
+exec $@
