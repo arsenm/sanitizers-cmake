@@ -117,7 +117,7 @@ function (sanitizer_check_compiler_flags FLAG_CANDIDATES NAME PREFIX)
                 if (${PREFIX}_FLAG_DETECTED)
                     # If compiler is a GNU compiler, search for static flag, if
                     # SANITIZE_LINK_STATIC is enabled.
-                    if (SANITIZE_LINK_STATIC)
+                    if (SANITIZE_LINK_STATIC AND (${COMPILER} STREQUAL "GNU"))
                         string(TOLOWER ${PREFIX} PREFIX_lower)
                         sanitizer_check_compiler_flag(
                             "-static-lib${PREFIX_lower}" ${LANG}
