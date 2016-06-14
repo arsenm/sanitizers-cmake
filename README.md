@@ -1,6 +1,6 @@
-# CMake-sanitizers
+# sanitizers-cmake
 
- [![](https://img.shields.io/github/issues-raw/RWTH-ELP/CMake-sanitizers.svg?style=flat-square)](https://github.com/RWTH-ELP/CMake-sanitizers/issues)
+ [![](https://img.shields.io/github/issues-raw/arsenm/sanitizers-cmake.svg?style=flat-square)](https://github.com/arsenm/sanitizers-cmake/issues)
 [![MIT](http://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
 
 CMake module to enable sanitizers for binary targets.
@@ -11,11 +11,11 @@ CMake module to enable sanitizers for binary targets.
 To use [FindSanitizers.cmake](cmake/FindSanitizers.cmake), simply add this repository as git submodule into your own repository
 ```Shell
 mkdir externals
-git submodule add git://github.com/RWTH-ELP/CMake-sanitizers.git externals/CMake-sanitizers
+git submodule add git://github.com/arsenm/sanitizers-cmake.git externals/sanitizers-cmake
 ```
-and adding ```externals/cmake-sanitizers/cmake``` to your ```CMAKE_MODULE_PATH```
+and adding ```externals/sanitizers-cmake/cmake``` to your ```CMAKE_MODULE_PATH```
 ```CMake
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/externals/cmake-sanitizers/cmake" ${CMAKE_MODULE_PATH})
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/externals/sanitizers-cmake/cmake" ${CMAKE_MODULE_PATH})
 ```
 
 If you don't use git or dislike submodules you can copy the files in [cmake directory](cmake) into your repository. *Be careful and keep updates in mind!*
@@ -64,7 +64,7 @@ The sanitizers check your program, while it's running. In some situations (e.g. 
 
 Anyone is welcome to contribute. Simply fork this repository, make your changes **in an own branch** and create a pull-request for your change. Please do only one change per pull-request.
 
-You found a bug? Please fill out an [issue](https://github.com/RWTH-ELP/CMake-sanitizers/issues) and include any data to reproduce the bug.
+You found a bug? Please fill out an [issue](https://github.com/arsenm/sanitizers-cmake/issues) and include any data to reproduce the bug.
 
 
 #### Contributors
