@@ -22,6 +22,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# To avoid error messages about CMP0051, this policy will be set to new. There
+# will be no problem, as TARGET_OBJECTS generator expressions will be filtered
+# with a regular expression from the sources.
+if (POLICY CMP0051)
+    cmake_policy(SET CMP0051 NEW)
+endif()
+
+
 # Helper function to get the language of a source file.
 function (sanitizer_lang_of_source FILE RETURN_VAR)
     get_filename_component(FILE_EXT "${FILE}" EXT)
