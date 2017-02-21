@@ -139,6 +139,10 @@ function (sanitizer_check_compiler_flags FLAG_CANDIDATES NAME PREFIX)
                 set(${PREFIX}_${COMPILER}_FLAGS "" CACHE STRING
                     "${NAME} flags for ${COMPILER} compiler.")
                 mark_as_advanced(${PREFIX}_${COMPILER}_FLAGS)
+
+                message(WARNING "${NAME} is not available for ${COMPILER} "
+                        "compiler. Targets using this compiler will be "
+                        "compiled without ${NAME}.")
             endif ()
         endif ()
     endforeach ()
@@ -147,19 +151,12 @@ endfunction ()
 
 # Helper to assign sanitizer flags for TARGET.
 function (saitizer_add_flags TARGET NAME PREFIX)
-    # Get list of compilers used by target and check, if target can be checked
-    # by sanitizer.
+    # Get list of compilers used by target and check, if sanitizer is available
+    # for this target. Other compiler checks like check for conflicting
+    # compilers will be done in add_sanitizers function.
     sanitizer_target_compilers(${TARGET} TARGET_COMPILER)
     list(LENGTH TARGET_COMPILER NUM_COMPILERS)
-    if (NUM_COMPILERS GREATER 1)
-        message(WARNING "${NAME} disabled for target ${TARGET} because it will "
-            "be compiled by different compilers.")
-        return()
-
-    elseif ((NUM_COMPILERS EQUAL 0) OR
-        ("${${PREFIX}_${TARGET_COMPILER}_FLAGS}" STREQUAL ""))
-        message(WARNING "${NAME} disabled for target ${TARGET} because there is"
-            " no sanitizer available for target sources.")
+    if ("${${PREFIX}_${TARGET_COMPILER}_FLAGS}" STREQUAL "")
         return()
     endif()
 

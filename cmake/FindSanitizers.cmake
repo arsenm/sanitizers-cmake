@@ -53,7 +53,32 @@ function(sanitizer_add_blacklist_file FILE)
 endfunction()
 
 function(add_sanitizers ...)
+    # If no sanitizer is enabled, return immediately.
+    if (NOT (SANITZE_ADDRESS OR SANITIZE_MEMORY OR SANITIZE_THREAD OR
+        SANITIZE_UNDEFINED))
+        return()
+    endif ()
+
     foreach (TARGET ${ARGV})
+        # Check if this target will be compiled by exactly one compiler. Other-
+        # wise sanitizers can't be used and a warning should be printed once.
+        sanitizer_target_compilers(${TARGET} TARGET_COMPILER)
+        list(LENGTH TARGET_COMPILER NUM_COMPILERS)
+        if (NUM_COMPILERS GREATER 1)
+            message(WARNING "Can't use any sanitizers for target ${TARGET}, "
+                    "because it will be compiled by incompatible compilers. "
+                    "Target will be compiled without sanitzers.")
+            return()
+
+        # If the target is compiled by no known compiler, ignore it.
+        elseif (NUM_COMPILERS EQUAL 0)
+            message(WARNING "Can't use any sanitizers for target ${TARGET}, "
+                    "because it uses an unknown compiler. Target will be "
+                    "compiled without sanitzers.")
+            return()
+        endif ()
+
+        # Add sanitizers for target.
         add_sanitize_address(${TARGET})
         add_sanitize_thread(${TARGET})
         add_sanitize_memory(${TARGET})
