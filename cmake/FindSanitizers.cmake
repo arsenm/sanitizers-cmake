@@ -54,7 +54,7 @@ endfunction()
 
 function(add_sanitizers ...)
     # If no sanitizer is enabled, return immediately.
-    if (NOT (SANITZE_ADDRESS OR SANITIZE_MEMORY OR SANITIZE_THREAD OR
+    if (NOT (SANITIZE_ADDRESS OR SANITIZE_MEMORY OR SANITIZE_THREAD OR
         SANITIZE_UNDEFINED))
         return()
     endif ()
