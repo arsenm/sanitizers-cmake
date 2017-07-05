@@ -67,14 +67,14 @@ function(add_sanitizers ...)
         if (NUM_COMPILERS GREATER 1)
             message(WARNING "Can't use any sanitizers for target ${TARGET}, "
                     "because it will be compiled by incompatible compilers. "
-                    "Target will be compiled without sanitzers.")
+                    "Target will be compiled without sanitizers.")
             return()
 
         # If the target is compiled by no known compiler, ignore it.
         elseif (NUM_COMPILERS EQUAL 0)
             message(WARNING "Can't use any sanitizers for target ${TARGET}, "
                     "because it uses an unknown compiler. Target will be "
-                    "compiled without sanitzers.")
+                    "compiled without sanitizers.")
             return()
         endif ()
 
