@@ -150,7 +150,7 @@ endfunction ()
 
 
 # Helper to assign sanitizer flags for TARGET.
-function (saitizer_add_flags TARGET NAME PREFIX)
+function (sanitizer_add_flags TARGET NAME PREFIX)
     # Get list of compilers used by target and check, if sanitizer is available
     # for this target. Other compiler checks like check for conflicting
     # compilers will be done in add_sanitizers function.
