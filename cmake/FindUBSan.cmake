@@ -32,10 +32,11 @@ set(FLAG_CANDIDATES
 
 include(sanitize-helpers)
 
-if (SANITIZE_UNDEFINED)
-    sanitizer_check_compiler_flags("${FLAG_CANDIDATES}"
-        "UndefinedBehaviorSanitizer" "UBSan")
-endif ()
+sanitizer_check_compiler_flags("${FLAG_CANDIDATES}" "UndefinedBehaviorSanitizer" "UBSan")
+
+if(UBSan_FLAG_DETECTED)
+    set(UBSan_FOUND TRUE)
+endif()
 
 function (add_sanitize_undefined TARGET)
     if (NOT SANITIZE_UNDEFINED)

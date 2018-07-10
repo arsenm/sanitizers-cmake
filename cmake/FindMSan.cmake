@@ -31,6 +31,12 @@ set(FLAG_CANDIDATES
 
 include(sanitize-helpers)
 
+sanitizer_check_compiler_flags("${FLAG_CANDIDATES}" "MemorySanitizer" "MSan")
+
+if(MSan_FLAG_DETECTED)
+    set(MSan_FOUND TRUE)
+endif()
+
 if (SANITIZE_MEMORY)
     if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
         message(WARNING "MemorySanitizer disabled for target ${TARGET} because "
@@ -43,8 +49,6 @@ if (SANITIZE_MEMORY)
         set(SANITIZE_MEMORY Off CACHE BOOL
             "Enable MemorySanitizer for sanitized targets." FORCE)
     else ()
-        sanitizer_check_compiler_flags("${FLAG_CANDIDATES}" "MemorySanitizer"
-            "MSan")
     endif ()
 endif ()
 
