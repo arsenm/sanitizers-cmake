@@ -39,7 +39,7 @@ find_package(TSan ${FIND_QUIETLY_FLAG})
 find_package(MSan ${FIND_QUIETLY_FLAG})
 find_package(UBSan ${FIND_QUIETLY_FLAG})
 
-
+set(Sanitizers_FOUND TRUE CACHE BOOL "Sanitizers module found")
 
 
 function(sanitizer_add_blacklist_file FILE)
