@@ -29,7 +29,8 @@ int
 main(int argc, char **argv)
 {
 	// Allocate a new array and delete it.
-	int *array = new int[argc];
+	int *array = new int[argc + 1];
+	array[argc] = 0;
 	delete[] array;
 
 	/* Access element of the deleted array. This will cause an memory error with
