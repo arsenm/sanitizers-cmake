@@ -56,9 +56,11 @@ find_package(Sanitizers)
 # add testcases
 #
 add_sanitized_testcase("asan_test_cpp" asan_test.cpp)
+add_sanitized_testcase("shortest_ext_test_cpp" shortest.ext.test.cpp)
 
 set_tests_properties(
 	"asan_test_cpp"
+	"shortest_ext_test_cpp"
 PROPERTIES
 	WILL_FAIL TRUE
 )
