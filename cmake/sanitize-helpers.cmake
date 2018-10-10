@@ -25,6 +25,11 @@
 # Helper function to get the language of a source file.
 function (sanitizer_lang_of_source FILE RETURN_VAR)
     get_filename_component(LONGEST_EXT "${FILE}" EXT)
+    # If extension is empty return. This can happen for extensionless headers
+    if("${LONGEST_EXT}" STREQUAL "")
+       set(${RETURN_VAR} "" PARENT_SCOPE)
+       return()
+    endif()
     # Get shortest extension as some files can have dot in their names
     string(REGEX REPLACE "^.*(\\.[^.]+)$" "\\1" FILE_EXT ${LONGEST_EXT})
     string(TOLOWER "${FILE_EXT}" FILE_EXT)
