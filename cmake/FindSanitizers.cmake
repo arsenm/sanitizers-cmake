@@ -77,12 +77,12 @@ function(add_sanitizers ...)
                     "Target will be compiled without sanitizers.")
             return()
 
-        # If the target is compiled by no known compiler, ignore it.
+        # If the target is compiled by no or no known compiler, give a warning.
         elseif (NUM_COMPILERS EQUAL 0)
-            message(WARNING "Can't use any sanitizers for target ${TARGET}, "
-                    "because it uses an unknown compiler. Target will be "
-                    "compiled without sanitizers.")
-            return()
+            message(WARNING "Sanitizers for target ${TARGET} may not be"
+                    " usable, because it uses no or an unknown compiler. "
+                    "This is a false warning for targets using only "
+		    "object lib(s) as input.")
         endif ()
 
         # Add sanitizers for target.
