@@ -39,13 +39,15 @@ if (SANITIZE_ADDRESS AND (SANITIZE_THREAD OR SANITIZE_MEMORY))
         "ThreadSanitizer or MemorySanitizer.")
 endif ()
 
-
 include(sanitize-helpers)
 
-if (SANITIZE_ADDRESS)
-    sanitizer_check_compiler_flags("${FLAG_CANDIDATES}" "AddressSanitizer"
-        "ASan")
+sanitizer_check_compiler_flags("${FLAG_CANDIDATES}" "AddressSanitizer" "ASan")
 
+if(ASan_FLAG_DETECTED)
+    set(ASan_FOUND TRUE)
+endif()
+
+if (SANITIZE_ADDRESS)
     find_program(ASan_WRAPPER "asan-wrapper" PATHS ${CMAKE_MODULE_PATH})
 	mark_as_advanced(ASan_WRAPPER)
 endif ()

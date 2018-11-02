@@ -40,6 +40,37 @@ find_package(MSan ${FIND_QUIETLY_FLAG})
 find_package(UBSan ${FIND_QUIETLY_FLAG})
 
 
+set(Sanitizers_COMPONENTS "")
+
+if(ASan_FOUND)
+    set(Sanitizers_ASan_FOUND TRUE)
+    list(APPEND Sanitizers_COMPONENTS ASan)
+endif()
+
+if(TSan_FOUND)
+    set(Sanitizers_TSan_FOUND TRUE)
+    list(APPEND Sanitizers_COMPONENTS TSan)
+endif()
+
+if(MSan_FOUND)
+    set(Sanitizers_MSan_FOUND TRUE)
+    list(APPEND Sanitizers_COMPONENTS MSan)
+endif()
+
+if(UBSan_FOUND)
+    set(Sanitizers_UBSan_FOUND TRUE)
+    list(APPEND Sanitizers_COMPONENTS UBSan)
+endif()
+
+
+include(FindPackageHandleStandardArgs)
+
+find_package_handle_standard_args(
+    Sanitizers
+    FOUND_VAR Sanitizers_FOUND
+    REQUIRED_VARS Sanitizers_COMPONENTS
+    HANDLE_COMPONENTS
+)
 
 
 function(sanitizer_add_blacklist_file FILE)

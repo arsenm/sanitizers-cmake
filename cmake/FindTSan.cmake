@@ -38,6 +38,12 @@ endif ()
 
 include(sanitize-helpers)
 
+sanitizer_check_compiler_flags("${FLAG_CANDIDATES}" "ThreadSanitizer" "TSan")
+
+if(TSan_FLAG_DETECTED)
+    set(TSan_FOUND TRUE)
+endif()
+
 if (SANITIZE_THREAD)
   if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND
       NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
@@ -50,9 +56,6 @@ if (SANITIZE_THREAD)
             "ThreadSanitizer is supported for 64bit systems only.")
         set(SANITIZE_THREAD Off CACHE BOOL
             "Enable ThreadSanitizer for sanitized targets." FORCE)
-    else ()
-        sanitizer_check_compiler_flags("${FLAG_CANDIDATES}" "ThreadSanitizer"
-            "TSan")
     endif ()
 endif ()
 
