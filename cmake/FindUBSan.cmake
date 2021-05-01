@@ -23,6 +23,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+option(SANITIZE_UNDEFINED "Enable UndefinedBehaviorSanitizer for sanitized targets." Off)
+
 set(FLAG_CANDIDATES "-g -fsanitize=undefined")
 
 include(sanitize-helpers)

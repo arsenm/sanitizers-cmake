@@ -28,7 +28,21 @@ find_package(Sanitizers)
 
 ## Usage
 
-You can enable the sanitizers with ``SANITIZE_ADDRESS``, ``SANITIZE_MEMORY``, ``SANITIZE_THREAD`` or ``SANITIZE_UNDEFINED`` options in your CMake configuration. You can do this by passing e.g. ``-DSANITIZE_ADDRESS=On`` on your command line or with your graphical interface.
+You can either enable the sanitizers globally 
+with ``SANITIZE_ADDRESS``, ``SANITIZE_MEMORY``, ``SANITIZE_THREAD`` or ``SANITIZE_UNDEFINED`` options 
+in your CMake configuration and use the cmake function add_sanitizers(<TARGET>). 
+
+Or you can add specific sanitizers to targets using sanitizer specific cmake functions:
+
+* add_sanitize_address(<TARGET>) 
+* add_sanitize_memory(<TARGET>) 
+* add_sanitize_thread(<TARGET>) 
+* add_sanitize_undefined(<TARGET>) 
+
+Note that those functions are independent from the global options.
+
+Pass global options e.g. ``-DSANITIZE_ADDRESS=On`` on your command line or 
+configure them your graphical interface.
 
 If sanitizers are supported by your compiler, the specified targets will be build with sanitizer support. If your compiler has no sanitizing capabilities (I asume intel compiler doesn't) you'll get a warning but CMake will continue processing and sanitizing will simply just be ignored.
 
@@ -42,7 +56,7 @@ Even C only targets may cause problems in certain situations. Some problems have
 
 ## Build targets with sanitizer support
 
-To enable sanitizer support you simply have to add ``add_sanitizers(<TARGET>)`` after defining your target. To provide a sanitizer blacklist file you can use the ``sanitizer_add_blacklist_file(<FILE>)`` function:
+To enable sanitizer support you simply have to add ``add_sanitize_<type>(<TARGET>)`` after defining your target. To provide a sanitizer blacklist file you can use the ``sanitizer_add_blacklist_file(<FILE>)`` function:
 ```CMake
 find_package(Sanitizers)
 
@@ -52,7 +66,7 @@ add_executable(some_exe foo.c bar.c)
 add_sanitizers(some_exe)
 
 add_library(some_lib foo.c bar.c)
-add_sanitizers(some_lib)
+add_sanitize_memory(some_lib)
 ```
 
 ## Run your application

@@ -39,8 +39,10 @@ endfunction(add_testcase)
 # Function to add testcases with asan enabled.
 function(add_sanitized_testcase TESTNAME SOURCEFILES)
     add_testcase(${TESTNAME} ${SOURCEFILES})
-    add_sanitize_address(${TESTNAME})
+    add_sanitizers(${TESTNAME})
 endfunction(add_sanitized_testcase)
+
+set(SANITIZE_ADDRESS TRUE)
 
 #
 # search for sanitizers
@@ -52,4 +54,7 @@ find_package(Sanitizers)
 #
 add_sanitized_testcase("asan_test_cpp" asan_test.cpp)
 
-set_tests_properties("asan_test_cpp" "shortest_ext_test_cpp" PROPERTIES WILL_FAIL TRUE)
+add_testcase("asan_test_cpp_specific" asan_test.cpp)
+add_sanitize_undefined("asan_test_cpp_specific")
+
+set_tests_properties("asan_test_cpp" PROPERTIES WILL_FAIL TRUE)

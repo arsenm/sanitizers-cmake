@@ -45,3 +45,83 @@ function(sanitizer_add_blacklist_file FILE)
 
     sanitizer_check_compiler_flags("-fsanitize-blacklist=${FILE}" "SanitizerBlacklist" "SanBlist")
 endfunction()
+
+function(add_sanitizers ...)
+    # If no sanitizer is enabled, return immediately.
+    if(
+        NOT
+        (SANITIZE_ADDRESS
+         OR SANITIZE_MEMORY
+         OR SANITIZE_THREAD
+         OR SANITIZE_UNDEFINED)
+    )
+        return()
+    endif()
+
+    if(SANITIZE_ADDRESS AND SANITIZE_THREAD)
+        message(
+            FATAL_ERROR
+                "Incompatible Sanitizer combination enabled: AddressSanitizer, ThreadSanitizer"
+        )
+    endif()
+    if(SANITIZE_ADDRESS AND SANITIZE_MEMORY)
+        message(
+            FATAL_ERROR
+                "Incompatible Sanitizer combination enabled: AddressSanitizer, MemorySanitizer"
+        )
+    endif()
+
+    if(SANITIZE_MEMORY AND SANITIZE_THREAD)
+        message(
+            FATAL_ERROR
+                "Incompatible Sanitizer combination enabled: MemorySanitizer, ThreadSanitizer"
+        )
+    endif()
+
+    foreach(TARGET ${ARGV})
+        # Check if this target will be compiled by exactly one compiler. Other-
+        # wise sanitizers can't be used and a warning should be printed once.
+        get_target_property(TARGET_TYPE ${TARGET} TYPE)
+        if(TARGET_TYPE STREQUAL "INTERFACE_LIBRARY")
+            message(
+                WARNING "Can't use any sanitizers for target ${TARGET}, "
+                        "because it is an interface library and cannot be " "compiled directly."
+            )
+            return()
+        endif()
+        sanitizer_target_compilers(${TARGET} TARGET_COMPILER)
+        list(LENGTH TARGET_COMPILER NUM_COMPILERS)
+        if(NUM_COMPILERS GREATER 1)
+            message(
+                WARNING
+                    "Can't use any sanitizers for target ${TARGET}, "
+                    "because it will be compiled by incompatible compilers. "
+                    "Target will be compiled without sanitizers."
+            )
+            return()
+
+            # If the target is compiled by no or no known compiler, give a warning.
+        elseif(NUM_COMPILERS EQUAL 0)
+            message(
+                WARNING
+                    "Sanitizers for target ${TARGET} may not be"
+                    " usable, because it uses no or an unknown compiler. "
+                    "This is a false warning for targets using only " "object lib(s) as input."
+            )
+        endif()
+
+        # Add sanitizers for target.
+        if(SANITIZE_ADDRESS)
+            add_sanitize_address(${TARGET})
+        endif()
+        if(SANITIZE_THREAD)
+            add_sanitize_thread(${TARGET})
+        endif()
+        if(SANITIZE_MEMORY)
+            add_sanitize_memory(${TARGET})
+        endif()
+        if(SANITIZE_UNDEFINED)
+            add_sanitize_undefined(${TARGET})
+        endif()
+    endforeach()
+endfunction(add_sanitizers)

@@ -19,6 +19,8 @@
 # DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
 # OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+option(SANITIZE_ADDRESS "Enable AddressSanitizer for sanitized targets." Off)
+
 set(
     FLAG_CANDIDATES
     # Clang 3.2+ use this version. The no-omit-frame-pointer option is optional.
