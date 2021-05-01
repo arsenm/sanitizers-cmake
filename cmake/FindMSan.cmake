@@ -3,6 +3,7 @@
 # Copyright (c)
 #   2013 Matthew Arsenault
 #   2015-2016 RWTH Aachen University, Federal Republic of Germany
+#   2021 Markus Eggenbauer
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,36 +23,29 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-option(SANITIZE_MEMORY "Enable MemorySanitizer for sanitized targets." Off)
-
-set(FLAG_CANDIDATES
-    "-g -fsanitize=memory"
-)
-
+set(FLAG_CANDIDATES "-g -fsanitize=memory")
 
 include(sanitize-helpers)
 
-if (SANITIZE_MEMORY)
-    if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-        message(WARNING "MemorySanitizer disabled for target ${TARGET} because "
-            "MemorySanitizer is supported for Linux systems only.")
-        set(SANITIZE_MEMORY Off CACHE BOOL
-            "Enable MemorySanitizer for sanitized targets." FORCE)
-    elseif (NOT ${CMAKE_SIZEOF_VOID_P} EQUAL 8)
-        message(WARNING "MemorySanitizer disabled for target ${TARGET} because "
-            "MemorySanitizer is supported for 64bit systems only.")
-        set(SANITIZE_MEMORY Off CACHE BOOL
-            "Enable MemorySanitizer for sanitized targets." FORCE)
-    else ()
-        sanitizer_check_compiler_flags("${FLAG_CANDIDATES}" "MemorySanitizer"
-            "MSan")
-    endif ()
-endif ()
+if(NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+    message(
+        WARNING "MemorySanitizer disabled for target ${TARGET} because "
+                "MemorySanitizer is supported for Linux systems only."
+    )
+elseif(NOT ${CMAKE_SIZEOF_VOID_P} EQUAL 8)
+    message(
+        WARNING "MemorySanitizer disabled for target ${TARGET} because "
+                "MemorySanitizer is supported for 64bit systems only."
+    )
+else()
+    sanitizer_check_compiler_flags("${FLAG_CANDIDATES}" "MemorySanitizer" "MSan")
+endif()
 
-function (add_sanitize_memory TARGET)
-    if (NOT SANITIZE_MEMORY)
-        return()
-    endif ()
-
+function(add_sanitize_memory TARGET)
+    # TODO: check conditions for target:
+    # if (SANITIZE_MEMORY AND (SANITIZE_THREAD OR SANITIZE_ADDRESS))
+    #   message(FATAL_ERROR "AddressSanitizer is not compatible with ThreadSanitizer or MemorySanitizer.")
+    # endif ()
+    sanitizer_check_target(${TARGET})
     sanitizer_add_flags(${TARGET} "MemorySanitizer" "MSan")
-endfunction ()
+endfunction()

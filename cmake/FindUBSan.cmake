@@ -3,6 +3,7 @@
 # Copyright (c)
 #   2013 Matthew Arsenault
 #   2015-2016 RWTH Aachen University, Federal Republic of Germany
+#   2021 Markus Eggenbauer
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,25 +23,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-option(SANITIZE_UNDEFINED
-    "Enable UndefinedBehaviorSanitizer for sanitized targets." Off)
-
-set(FLAG_CANDIDATES
-    "-g -fsanitize=undefined"
-)
-
+set(FLAG_CANDIDATES "-g -fsanitize=undefined")
 
 include(sanitize-helpers)
 
-if (SANITIZE_UNDEFINED)
-    sanitizer_check_compiler_flags("${FLAG_CANDIDATES}"
-        "UndefinedBehaviorSanitizer" "UBSan")
-endif ()
+sanitizer_check_compiler_flags("${FLAG_CANDIDATES}" "UndefinedBehaviorSanitizer" "UBSan")
 
-function (add_sanitize_undefined TARGET)
-    if (NOT SANITIZE_UNDEFINED)
-        return()
-    endif ()
-
+function(add_sanitize_undefined TARGET)
+    sanitizer_check_target(${TARGET})
     sanitizer_add_flags(${TARGET} "UndefinedBehaviorSanitizer" "UBSan")
-endfunction ()
+endfunction()
