@@ -75,6 +75,7 @@ endfunction ()
 
 # Helper function to check compiler flags for language compiler.
 function (sanitizer_check_compiler_flag FLAG LANG VARIABLE)
+
     if (${LANG} STREQUAL "C")
         include(CheckCCompilerFlag)
         check_c_compiler_flag("${FLAG}" ${VARIABLE})
@@ -97,6 +98,7 @@ function (sanitizer_check_compiler_flag FLAG LANG VARIABLE)
                 " - Failed (Check not supported)")
         endif ()
     endif()
+
 endfunction ()
 
 
@@ -167,11 +169,10 @@ function (sanitizer_add_flags TARGET NAME PREFIX)
         return()
     endif()
 
-    # Set compile- and link-flags for target.
-    set_property(TARGET ${TARGET} APPEND_STRING
-        PROPERTY COMPILE_FLAGS " ${${PREFIX}_${TARGET_COMPILER}_FLAGS}")
-    set_property(TARGET ${TARGET} APPEND_STRING
-        PROPERTY COMPILE_FLAGS " ${SanBlist_${TARGET_COMPILER}_FLAGS}")
-    set_property(TARGET ${TARGET} APPEND_STRING
-        PROPERTY LINK_FLAGS " ${${PREFIX}_${TARGET_COMPILER}_FLAGS}")
+    separate_arguments(flags_list UNIX_COMMAND "${${PREFIX}_${TARGET_COMPILER}_FLAGS} ${SanBlist_${TARGET_COMPILER}_FLAGS}")
+    target_compile_options(${TARGET} PRIVATE ${flags_list})
+
+    separate_arguments(flags_list UNIX_COMMAND "${${PREFIX}_${TARGET_COMPILER}_FLAGS}")
+    target_link_options(${TARGET} PRIVATE ${flags_list})
+
 endfunction ()
