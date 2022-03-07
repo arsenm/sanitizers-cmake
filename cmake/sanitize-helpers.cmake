@@ -170,9 +170,9 @@ function (sanitizer_add_flags TARGET NAME PREFIX)
     endif()
 
     separate_arguments(flags_list UNIX_COMMAND "${${PREFIX}_${TARGET_COMPILER}_FLAGS} ${SanBlist_${TARGET_COMPILER}_FLAGS}")
-    target_compile_options(${TARGET} PRIVATE ${flags_list})
+    target_compile_options(${TARGET} PUBLIC ${flags_list})
 
     separate_arguments(flags_list UNIX_COMMAND "${${PREFIX}_${TARGET_COMPILER}_FLAGS}")
-    target_link_options(${TARGET} PRIVATE ${flags_list})
+    target_link_options(${TARGET} PUBLIC ${flags_list})
 
 endfunction ()
