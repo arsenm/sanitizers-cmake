@@ -112,7 +112,7 @@ function (sanitizer_check_compiler_flags FLAG_CANDIDATES NAME PREFIX)
         # So instead of searching flags foreach language, search flags foreach
         # compiler used.
         set(COMPILER ${CMAKE_${LANG}_COMPILER_ID})
-        if (NOT DEFINED ${PREFIX}_${COMPILER}_FLAGS)
+        if (COMPILER AND NOT DEFINED ${PREFIX}_${COMPILER}_FLAGS)
             foreach (FLAG ${FLAG_CANDIDATES})
                 if(NOT CMAKE_REQUIRED_QUIET)
                     message(STATUS "Try ${COMPILER} ${NAME} flag = [${FLAG}]")
