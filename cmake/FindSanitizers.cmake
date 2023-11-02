@@ -22,6 +22,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+cmake_minimum_required(VERSION 3.13)	# target_link_options()
+
 # If any of the used compiler is a GNU compiler, add a second option to static
 # link against the sanitizers.
 option(SANITIZE_LINK_STATIC "Try to link static against sanitizers." Off)
