@@ -50,7 +50,11 @@ if (SANITIZE_ADDRESS)
         "ASan")
 
     find_program(ASan_WRAPPER "asan-wrapper" PATHS ${CMAKE_MODULE_PATH})
-	mark_as_advanced(ASan_WRAPPER)
+    mark_as_advanced(ASan_WRAPPER)
+    if (CMAKE_SYSTEM_NAME EQUAL "Linux")	
+       find_library(ASan_SHARED_LIB "clang_rt.asan-x86_64" PATH_SUFFIXES "linux")
+       mark_as_advanced(ASan_SHARED_LIB)
+    endif()
 endif ()
 
 function (add_sanitize_address TARGET)
