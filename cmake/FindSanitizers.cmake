@@ -66,7 +66,7 @@ function(add_sanitizers)
             message(WARNING "Can't use any sanitizers for target ${TARGET}, "
                     "because it is an interface library and cannot be "
                     "compiled directly.")
-            return()
+            continue()
         endif ()
         sanitizer_target_compilers(${TARGET} TARGET_COMPILER)
         list(LENGTH TARGET_COMPILER NUM_COMPILERS)
@@ -74,7 +74,7 @@ function(add_sanitizers)
             message(WARNING "Can't use any sanitizers for target ${TARGET}, "
                     "because it will be compiled by incompatible compilers. "
                     "Target will be compiled without sanitizers.")
-            return()
+            continue()
 
         elseif (NUM_COMPILERS EQUAL 0)
             # If the target is compiled by no known compiler, give a warning.

@@ -65,3 +65,11 @@ PROPERTIES
 	WILL_FAIL TRUE
 )
 
+add_test(
+    NAME add_sanitizers_multiple_targets
+    COMMAND "${CMAKE_COMMAND}"
+        "-DSANITIZERS_SOURCE=${PROJECT_SOURCE_DIR}"
+        -S "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/multiple-targets"
+        -B "${CMAKE_CURRENT_BINARY_DIR}/multiple-targets"
+)
+
